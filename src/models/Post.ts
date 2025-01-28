@@ -27,4 +27,4 @@ const postSchema = new mongoose.Schema(
     },
 );
 
-export const Post = mongoose.model<PostDocument>("Post", postSchema as mongoose.PassportLocalSchema);
+export const Post = mongoose.model<PostDocument>("Post", postSchema as mongoose.Schema<PostDocument>);

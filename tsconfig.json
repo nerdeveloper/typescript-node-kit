@@ -1,23 +1,55 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "es6",
-        "noImplicitAny": true,
-        "moduleResolution": "node",
-        "sourceMap": true,
+        "target": "es2022",
         "outDir": "dist",
-        "rootDir": "src",
+        "module": "commonjs",
+        "noImplicitAny": false,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
         "baseUrl": ".",
+        "sourceMap": true,
+        "typeRoots": [
+            "./node_modules/@types",
+            "./types/declarations.d.ts"
+        ],
+        "types": [
+            "node",
+            "jest"
+        ],
+        "lib": [
+          "dom",
+          "es2022"
+        ],
         "paths": {
             "*": [
-                "node_modules/*"
+                "node_modules/*",
+                "src/types/*"
             ]
-        }
+        },
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "types/**/*"
     ],
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules",
+        "build",
+        ".git",
+        ".vcode",
+        "src/public/**/*",
+        "src/controllers/webauthn.ts",
+        "src/models/**/*"
+    ],
+    "typedocOptions": {
+        "entryPoints": [
+            "src/*.ts",
+            "src/controllers/*.ts",
+            "src/controllers/*.ts",
+            "src/routes/*.ts",
+            "src/routes/commutedash/*.ts",
+            "src/routes/stripe/*.ts",
+            "src/util/*.ts",
+        ],
+        "out": "docs"
+    }    
 }

@@ -4,16 +4,14 @@ import config from "../config";
 
 import {User} from "../models/User";
 import passportLocal from "passport-local";
-import * as passportGoogle from "passport-google-oauth";
-import * as passportGithub from "passport-github";
-import * as passportTwitter from "passport-twitter";
-import * as passportFacebook from "passport-facebook";
-import * as passportLinkedin from "passport-linkedin-oauth2";
-import * as passportDiscord from "passport-discord";
-//@ts-ignore
-import * as passportSlack from "passport-slack";
-//@ts-ignore
-import * as passportDropbox from "passport-dropbox-oauth2";
+import { Strategy as googleStrategy } from 'passport-google-oauth20';
+import { Strategy as githubStrategy } from 'passport-github2';
+import { Strategy as twitterStrategy } from 'passport-twitter';
+import { Strategy as facebookStrategy } from 'passport-facebook';
+import { Strategy as linkedInStrategy } from 'passport-linkedin-oauth2';
+import { Strategy as slackStrategy } from 'passport-slack-oauth2';
+import { Strategy as discordStrategy } from 'passport-discord';
+import { Strategy as dropboxStrategy } from 'passport-dropbox-oauth2';
 // Local Authentication strategy
 const LocalStrategy = passportLocal.Strategy;
 
@@ -28,8 +26,6 @@ passport.use(
 );
 
 // Google Authentication strategy
-const googleStrategy = passportGoogle.OAuth2Strategy;
-
 passport.use(
     new googleStrategy(
         {
@@ -37,28 +33,42 @@ passport.use(
             clientSecret: `${process.env.GOOGLE_CLIENT_SECRET}`,
             callbackURL: `${config.site}/auth/google/callback`,
         },
-        (accessToken, refreshToken, profile, done) => {
-            User.findOne({email: profile._json.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            // Extract email and Google ID from the profile
+            const email = profile._json?.email;
+            const googleId = profile.id;
+
+            if (!email) {
+              return done(new Error('No email found in Google profile'));
+            }
+
+            // Check if the user already exists
+            let user = await User.findOne({ email });
 
                 if (user) {
+                    // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({googleId: profile.id, email: profile._json.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                  googleId,
+                  email,
+                  token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
+        }
+    )
 );
 
 // Github Authentication strategy
-const githubStrategy = passportGithub.Strategy;
 passport.use(
     new githubStrategy(
         {
@@ -66,30 +76,42 @@ passport.use(
             clientSecret: `${process.env.GITHUB_CLIENT_SECRET}`,
             callbackURL: `${config.site}/auth/github/callback`,
         },
-        (accessToken, refreshToken, profile, done) => {
-            //@ts-ignore
-            User.findOne({email: profile._json.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+              // Extract email and GitHub ID from the profile
+              const email = profile._json?.email;
+              const githubId = profile.id;
+
+              if (!email) {
+                return done(new Error('No email found in GitHub profile'));
+              }
+
+              // Check if the user already exists
+              let user = await User.findOne({ email });
 
                 if (user) {
+                    // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    //@ts-ignore
-                    const user = new User({githubId: profile.id, email: profile._json.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                  githubId,
+                  email,
+                  token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
+        }
+    )
 );
 
 // Twitter Authentication strategy
-const twitterStrategy = passportTwitter.Strategy;
 passport.use(
     new twitterStrategy(
         {
@@ -98,28 +120,42 @@ passport.use(
             callbackURL: `${config.site}/auth/twitter/callback`,
             includeEmail: true,
         },
-        (accessToken, refreshToken, profile, done) => {
-            User.findOne({email: profile._json.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+              // Extract email and Twitter ID from the profile
+              const email = profile._json?.email;
+              const twitterId = profile.id;
+
+              if (!email) {
+                return done(new Error('No email found in Twitter profile'));
+              }
+
+              // Check if the user already exists
+              let user = await User.findOne({ email });
 
                 if (user) {
+                    // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({twitterId: profile.id, email: profile._json.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                  twitterId,
+                  email,
+                  token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
+        }
+    )
 );
 
 // Facebook Authentication strategy
-const facebookStrategy = passportFacebook.Strategy;
 passport.use(
     new facebookStrategy(
         {
@@ -128,61 +164,87 @@ passport.use(
             callbackURL: `${config.site}/auth/facebook/callback`,
             profileFields: ["emails"], // email should be in the scope.
         },
-        (accessToken, refreshToken, profile, done) => {
-            User.findOne({email: profile._json.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+              // Extract email and Facebook ID from the profile
+              const email = profile._json?.email;
+              const facebookId = profile.id;
+
+              if (!email) {
+                return done(new Error('No email found in Facebook profile'));
+              }
+
+              // Check if the user already exists
+              let user = await User.findOne({ email });
 
                 if (user) {
+                  // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({facebookId: profile.id, email: profile._json.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                  facebookId,
+                  email,
+                  token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+              return done(err);
+            }
+        }
+    )
 );
 
 // LinkedIn Authentication strategy
-const linkedinStrategy = passportLinkedin.Strategy;
 passport.use(
-    new linkedinStrategy(
+    new linkedInStrategy(
         {
             clientID: `${process.env.LINKEDIN_CLIENT_ID}`,
             clientSecret: `${process.env.LINKEDIN_CLIENT_SECRET}`,
             callbackURL: `${config.site}/auth/linkedin/callback`,
             //@ts-ignore
             scope: ["r_emailaddress", "r_liteprofile"],
-            state: true,
         },
-        (accessToken: any, refreshToken: any, profile: any, done: any) => {
-            User.findOne({email: profile.emails[0].value}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+                // Extract the email and LinkedIn ID from the profile
+                const email = profile.emails?.[0]?.value;
+                const linkedinId = profile.id;
+
+                if (!email) {
+                    return done(new Error('No email found in LinkedIn profile'));
+                }
+
+                // Check if the user already exists
+                let user = await User.findOne({ email });
 
                 if (user) {
+                    // If the user exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({linkedinId: profile.id, email: profile.emails[0].value, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // If the user doesn't exist, create a new user
+                user = new User({
+                    linkedinId,
+                    email,
+                    token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+                return done(err);
+            }
+        }
+    )
 );
 
 // Dropbox Authentication strategy
-const dropboxStrategy = passportDropbox.Strategy;
-
 passport.use(
     new dropboxStrategy(
         {
@@ -191,29 +253,42 @@ passport.use(
             clientSecret: `${process.env.DROPBOX_CLIENT_SECRET}`,
             callbackURL: `${config.site}/auth/dropbox/callback`,
         },
-        (accessToken: any, refreshToken: any, profile: any, done: any) => {
-            User.findOne({email: profile.emails[0].value}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+                // Extract email and Dropbox ID from the profile
+                const email = profile.emails?.[0]?.value;
+                const dropboxId = profile.id;
+
+                if (!email) {
+                    return done(new Error('No email found in Dropbox profile'));
+                }
+
+                // Check if the user already exists
+                let user = await User.findOne({ email });
 
                 if (user) {
+                    // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({dropboxId: profile.id, email: profile.emails[0].value, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                    dropboxId,
+                    email,
+                    token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+                return done(err);
+            }
+        }
+    )
 );
 
 // Discord Authentication strategy
-const discordStrategy = passportDiscord.Strategy;
-
 passport.use(
     new discordStrategy(
         {
@@ -222,29 +297,42 @@ passport.use(
             callbackURL: `${config.site}/auth/discord/callback`,
             scope: "identify email",
         },
-        (accessToken: any, refreshToken: any, profile: any, done: any) => {
-            User.findOne({email: profile.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+                // Extract email and Discord ID from the profile
+                const email = profile.email;
+                const discordId = profile.id;
+
+                if (!email) {
+                    return done(new Error('No email found in Discord profile'));
+                }
+
+                // Check if the user already exists
+                let user = await User.findOne({ email });
 
                 if (user) {
+                    // User exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({discordId: profile.id, email: profile.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // User doesn't exist, create a new user
+                user = new User({
+                    discordId,
+                    email,
+                    token: accessToken,
+                });
+
+                // Save the new user
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+                return done(err);
+            }
+        }
+    )
 );
 
 // Slack Authentication strategy
-const slackStrategy = passportSlack.Strategy;
-
 passport.use(
     new slackStrategy(
         {
@@ -253,24 +341,39 @@ passport.use(
             callbackURL: `${config.site}/auth/slack/callback`,
             scope: "identity.basic identity.email",
         },
-        (accessToken: any, refreshToken: any, profile: any, done: any) => {
-            User.findOne({email: profile.user.email}, (err, user) => {
-                if (err) return done(err);
+        async (accessToken, refreshToken, profile, done) => {
+            try {
+                // Extract email and Slack ID from the profile
+                const email = profile.user?.email;
+                const slackId = profile.user?.id;
+
+                if (!email) {
+                    return done(new Error('No email found in Slack profile'));
+                }
+
+                // Check if the user already exists in the database
+                let user = await User.findOne({ email });
 
                 if (user) {
+                    // If the user exists, return the existing user
                     return done(null, user);
-                } else {
-                    const user = new User({slackId: profile.user.id, email: profile.user.email, token: accessToken});
-                    user.save(err => {
-                        if (err) {
-                            throw err;
-                        }
-                        return done(null, user);
-                    });
                 }
-            });
-        },
-    ),
+
+                // If the user doesn't exist, create a new user
+                user = new User({
+                    slackId,
+                    email,
+                    token: accessToken,
+                });
+
+                // Save the new user to the database
+                await user.save();
+                return done(null, user);
+            } catch (err) {
+                return done(err);
+            }
+        }
+    )
 );
 
 passport.serializeUser((user, done) => {

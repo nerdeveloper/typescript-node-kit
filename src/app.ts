@@ -1,11 +1,9 @@
 import express from "express";
-
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import session from "express-session";
 import passport from "passport";
 import logger from "morgan";
-import mongo from "connect-mongo";
+import MongoStore from "connect-mongo";
 import path from "path";
 import flash from "connect-flash";
 import compression from "compression";
@@ -18,9 +16,6 @@ import indexRouter from "./routes/index";
 import authRouter from "./routes/auth";
 import "./handlers/passport";
 
-// import environmental variables from our variables.env file
-
-const MongoStore = mongo(session);
 // Create Express server
 const app = express();
 
@@ -32,7 +27,7 @@ app.get("env") === "development" ? app.use(require("express-status-monitor")()) 
 app.use(logger("dev"));
 app.use(compression());
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // serves up static files from the public folder. Anything in public/ will just be served up as the file it is
@@ -40,19 +35,19 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // Takes the raw requests and turns them into usable properties on req.body
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
     session({
-        name: process.env.SESSION_NAME,
-        secret: process.env.SECRET,
+        secret: process.env.SESSION_SECRET || "secret",
         resave: false,
         saveUninitialized: false,
-        store: new MongoStore({mongooseConnection: mongoose.connection}),
-    }),
+        store: MongoStore.create({mongoUrl: process.env.MONGODB_URI || "mongodb://localhost:27017/your-db-name"
+    })
+  })
 );
 
-// Passport JS is what we use to handle our logins
+// Initialize Passport and restore authentication state, if any, from the session.
 app.use(passport.initialize());
 app.use(passport.session());
 
