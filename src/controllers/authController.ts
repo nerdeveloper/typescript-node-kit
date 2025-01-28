@@ -11,10 +11,14 @@ export const login = (req: Request, res: Response) => {
     res.render("login", {title: "Login | Hackathon Starter Kit"});
 };
 
-export const logout = (req: Request, res: Response) => {
-    req.logout();
-    req.flash("success", "You are now logged out! 👋");
-    res.redirect("/login");
+export const logout = (req: Request, res: Response, next) => {
+    req.logout((err) => {
+        if (err) {
+            return next(err);
+        }
+        req.flash("success", "You are now logged out! 👋");
+        res.redirect("/login");
+    });
 };
 
 export const loginForm = (req: Request, res: Response) => {

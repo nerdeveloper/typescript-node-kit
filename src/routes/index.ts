@@ -1,6 +1,6 @@
 import express from "express";
 import {Request, Response, NextFunction} from "express";
-import {check, sanitizeBody, body} from "express-validator";
+import {check, body} from "express-validator";
 import "connect-ensure-login";
 
 const router = express.Router();
@@ -30,11 +30,11 @@ router.post(
     "/contact",
     [
         /**Check the form and validated it before submitting  */
-        sanitizeBody("name"),
+        body("name").trim(),
         check("name", "Name cannot be blank")
             .not()
             .isEmpty(),
-        sanitizeBody("surname"),
+        body("surname").trim(),
         check("surname", "Name cannot be blank")
             .not()
             .isEmpty(),
@@ -112,8 +112,8 @@ router.post(
             .not()
             .isEmpty(),
     ],
-    (req: Request, res: Response) => {
-        wrapAsync(authController.registerForm(req, res));
+    (req: Request, res: Response, next) => {
+      wrapAsync(authController.registerForm)(req, res, next);
     },
 );
 
@@ -125,11 +125,11 @@ router.post(
     "/create",
     [
         /**Check the form and validated it before submitting  */
-        sanitizeBody("title"),
+        body("title").trim(),
         check("title", "Enter the title of your Post")
             .not()
             .isEmpty(),
-        sanitizeBody("description"),
+        body("description").trim(),
         check("description", "Enter the description of your Post")
             .not()
             .isEmpty(),

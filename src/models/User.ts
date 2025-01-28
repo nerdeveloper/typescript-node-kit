@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
             type: String,
             unique: true,
             lowercase: true,
-            required: "Please enter your email address",
+            required: [true, "Please enter your email address"],
             trim: true,
             validate: [validator.isEmail, "Invalid Email address"],
         },
@@ -66,4 +66,4 @@ userSchema.plugin(passportLocalMongoose, {
 
 userSchema.plugin(mongoosedbErrorHandler);
 
-export const User = mongoose.model("User", userSchema as mongoose.PassportLocalSchema);
+export const User = mongoose.model("User", userSchema as mongoose.PassportLocalSchema<UserDocument, mongoose.Model<UserDocument>>);
